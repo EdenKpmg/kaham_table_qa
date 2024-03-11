@@ -9,3 +9,4 @@ SQLAlchemy
 langchain_community
 langchain_experimental
 langchain
+langchain_core
