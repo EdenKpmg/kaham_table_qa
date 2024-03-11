@@ -14,7 +14,13 @@ from starlette.middleware.cors import CORSMiddleware
 import sqlite3
 import json
 from sqlalchemy import create_engine
-
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    FewShotPromptTemplate,
+    MessagesPlaceholder,
+    PromptTemplate,
+    SystemMessagePromptTemplate,
+)
 
 
 def load_json_to_dataframes(json_list):
@@ -27,15 +33,15 @@ def load_json_to_dataframes(json_list):
 
 def json_file_to_tuples(file_path):
     """
-    Reads JSON data from a file and converts it into a list of tuples,
-    where each tuple contains the values from one of the JSON objects.
+        Reads JSON data from a file and converts it into a list of tuples,
+        where each tuple contains the values from one of the JSON objects.
 
-    Parameters:
-    - file_path (str): The path to the JSON file.
+        Parameters:
+        - file_path (str): The path to the JSON file.
 
-    Returns:
-    - list of tuples: Each tuple contains the values from one of the JSON objects.
-    """
+        Returns:
+        - list of tuples: Each tuple contains the values from one of the JSON objects.
+        """
     # Open and load the JSON data from the file
     with open(file_path, 'r', encoding='utf-8') as file:
         data = json.load(file)
@@ -47,6 +53,7 @@ def json_file_to_tuples(file_path):
 
 # Function to clean and format a single tuple into an SQL insert command
 def format_tuple_as_insert(data_tuple, table_name):
+
     # Clean the tuple by removing '\r' and escaping single quotes
     cleaned_tuple = tuple(value.replace('\r', '').replace("'", "''") for value in data_tuple)
     # Format the tuple as an SQL insert command
@@ -204,18 +211,55 @@ def llm_question(req: dict):
     # openai.api_type = "azure"
     # openai.api_base = "https://bank-hapoalim.openai.azure.com/"
     # openai.api_version = "2023-03-15-preview"
-    # openai.api_key = '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'
+
+    system_prefix = """You are an agent designed to interact with a SQL database and provide answers in Hebrew.
+    Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
+    Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
+    You can order the results by a relevant column to return the most interesting examples in the database.
+    Never query for all the columns from a specific table, only ask for the relevant columns given the question.
+    You have access to tools for interacting with the database.
+    Only use the given tools. Only use the information returned by the tools to construct your final answer.
+    You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
+    In the database you'll find the following tables:
+     mivnim (
+    מספר_מבנה TEXT,
+    אבן_דרך TEXT,
+    איטרציה TEXT,
+    סטטוס TEXT,
+    תחנה TEXT,
+    שלב_אכלוס TEXT,
+    ימים_בסטטוס_נוכחי TEXT
+    );
+    mivnim_status (
+    מספר_מבנה_ואבן_דרך TEXT,
+    האם_ניתן_לסגור_אבן_דרך TEXT,
+    מספר_ימים_באבן_דרך TEXT
+    );
+
+    
+    DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
+    
+    If the question does not seem related to the database, just return "I don't know" as the answer.
+    
+    """
+    # prompt_template = PromptTemplate(input_variables=["question"], template= system_prefix)
+    full_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", system_prefix), ("human", "{input}"), MessagesPlaceholder("agent_scratchpad")
+    ]
+    )
     db = SQLDatabase.from_uri("sqlite:///kaham_database_new.db")
     inquiry = req['prompt']
 
     llm = AzureChatOpenAI(temperature=0, max_tokens=800, openai_api_base=openai.api_base,
-                            openai_api_key=openai.api_key,
-                            openai_api_version=openai.api_version, deployment_name="gpt-35-turbo-16k")
+                          openai_api_key=openai.api_key,
+                          openai_api_version=openai.api_version, deployment_name="gpt-35-turbo-16k")
     agent_executor = create_sql_agent(
         llm=llm,
+        prompt=full_prompt,
         toolkit=SQLDatabaseToolkit(db=db, llm=llm),
         verbose=True,
-        agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+        agent_type="openai-tools",
     )
 
     res = agent_executor.run(inquiry)
