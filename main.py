@@ -196,8 +196,8 @@ async def init():
 
 
     # Configure the baseline configuration of the OpenAI library for Azure OpenAI Service.
-    openai.api_base = "https://azure-open-ao-new.openai.azure.com/"
-    openai.api_key = "e3fcd2d5bcbf4bbb84810b386eb43ca0"
+    openai.api_base = "https://kahamgpt.openai.azure.com/"
+    openai.api_key = "fddbd98c77ae4d979cc758f99502bc79"
     openai.api_version = "2023-05-15"
     openai.api_type = "azure"
 
