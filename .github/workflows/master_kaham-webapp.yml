@@ -66,4 +66,4 @@ jobs:
         with:
           app-name: 'kaham-webapp'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_AE02D75A2E464777A8D6B406E377EB07 }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_BA31924905CB45B58F6FDFF7F83046FC }}
