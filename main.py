@@ -252,14 +252,6 @@ async def init():
     llm_vars['agent'] = agent_executor
 @app.post("/question")
 def llm_question(req: dict):
-    # Example usage
-    #
-    # # Configure the baseline configuration of the OpenAI library for Azure OpenAI Service.
-    # openai.api_type = "azure"
-    # openai.api_base = "https://bank-hapoalim.openai.azure.com/"
-    # openai.api_version = "2023-03-15-preview"
-
-
     inquiry = req['prompt']
     res = llm_vars['agent'].run(inquiry)
     return {"response": res}
