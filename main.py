@@ -201,55 +201,43 @@ async def init():
     openai.api_version = "2023-05-15"
     openai.api_type = "azure"
 
-#
-
-@app.post("/question")
-def llm_question(req: dict):
-    # Example usage
-    #
-    # # Configure the baseline configuration of the OpenAI library for Azure OpenAI Service.
-    # openai.api_type = "azure"
-    # openai.api_base = "https://bank-hapoalim.openai.azure.com/"
-    # openai.api_version = "2023-03-15-preview"
-
     system_prefix = """You are an agent designed to interact with a SQL database and provide answers in Hebrew.
-    Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
-    Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
-    You can order the results by a relevant column to return the most interesting examples in the database.
-    Never query for all the columns from a specific table, only ask for the relevant columns given the question.
-    You have access to tools for interacting with the database.
-    Only use the given tools. Only use the information returned by the tools to construct your final answer.
-    You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
-    In the database you'll find the following tables:
-     mivnim (
-    מספר_מבנה TEXT,
-    אבן_דרך TEXT,
-    איטרציה TEXT,
-    סטטוס TEXT,
-    תחנה TEXT,
-    שלב_אכלוס TEXT,
-    ימים_בסטטוס_נוכחי TEXT
-    );
-    mivnim_status (
-    מספר_מבנה_ואבן_דרך TEXT,
-    האם_ניתן_לסגור_אבן_דרך TEXT,
-    מספר_ימים_באבן_דרך TEXT
-    );
-
+        Given an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.
+        Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most {top_k} results.
+        You can order the results by a relevant column to return the most interesting examples in the database.
+        Never query for all the columns from a specific table, only ask for the relevant columns given the question.
+        You have access to tools for interacting with the database.
+        Only use the given tools. Only use the information returned by the tools to construct your final answer.
+        You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
+        In the database you'll find the following tables:
+         mivnim (
+        מספר_מבנה TEXT,
+        אבן_דרך TEXT,
+        איטרציה TEXT,
+        סטטוס TEXT,
+        תחנה TEXT,
+        שלב_אכלוס TEXT,
+        ימים_בסטטוס_נוכחי TEXT
+        );
+        mivnim_status (
+        מספר_מבנה_ואבן_דרך TEXT,
+        האם_ניתן_לסגור_אבן_דרך TEXT,
+        מספר_ימים_באבן_דרך TEXT
+        );
     
-    DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
-    
-    If the question does not seem related to the database, just return "I don't know" as the answer.
-    
-    """
+        
+        DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
+        
+        If the question does not seem related to the database, just return "I don't know" as the answer.
+        
+        """
     # prompt_template = PromptTemplate(input_variables=["question"], template= system_prefix)
     full_prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", system_prefix), ("human", "{input}"), MessagesPlaceholder("agent_scratchpad")
-    ]
+        [
+            ("system", system_prefix), ("human", "{input}"), MessagesPlaceholder("agent_scratchpad")
+        ]
     )
-    db = SQLDatabase.from_uri("sqlite:///kaham_database_new.db")
-    inquiry = req['prompt']
+    db = SQLDatabase.from_uri("sqlite:///kaham_database_new_azure.db")
 
     llm = AzureChatOpenAI(temperature=0, max_tokens=800, openai_api_base=openai.api_base,
                           openai_api_key=openai.api_key,
@@ -261,7 +249,18 @@ def llm_question(req: dict):
         verbose=True,
         agent_type="openai-tools",
     )
+    llm_vars['agent'] = agent_executor
+@app.post("/question")
+def llm_question(req: dict):
+    # Example usage
+    #
+    # # Configure the baseline configuration of the OpenAI library for Azure OpenAI Service.
+    # openai.api_type = "azure"
+    # openai.api_base = "https://bank-hapoalim.openai.azure.com/"
+    # openai.api_version = "2023-03-15-preview"
 
-    res = agent_executor.run(inquiry)
+
+    inquiry = req['prompt']
+    res = llm_vars['agent'].run(inquiry)
     return {"response": res}
 
