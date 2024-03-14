@@ -67,19 +67,19 @@ def format_tuple_as_insert_mivnim_status(data_tuple, table_name):
     return f"INSERT INTO {table_name} ({columns_str}) VALUES ({values_str});\n"
 
 
-data = json_file_to_tuples("מספר_מבנה_ואבן_דרך.json")
-# Specify the name of the table
-table_name = 'mivnim_status'
+# data = json_file_to_tuples("מספר_מבנה_ואבן_דרך.json")
+# # Specify the name of the table
+# table_name = 'mivnim_status'
 
-# Open (or create) the SQL file
-with open('initialize_mivnim_status_table.sql', 'w', encoding='utf-8') as file:
-    # Write each data tuple to the file as an insert command
-    for data_tuple in data:
-        insert_command = format_tuple_as_insert_mivnim_status(data_tuple, table_name)
-        file.write(insert_command)
+# # Open (or create) the SQL file
+# with open('initialize_mivnim_status_table.sql', 'w', encoding='utf-8') as file:
+#     # Write each data tuple to the file as an insert command
+#     for data_tuple in data:
+#         insert_command = format_tuple_as_insert_mivnim_status(data_tuple, table_name)
+#         file.write(insert_command)
 
 
-print("SQL insert commands have been written to insert_commands.sql")
+# print("SQL insert commands have been written to insert_commands.sql")
 
 
 # #
