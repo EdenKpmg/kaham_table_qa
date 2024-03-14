@@ -124,9 +124,9 @@ print("SQL insert commands have been written to insert_commands.sql")
 # conn.close()
 
 
-db = SQLDatabase.from_uri("sqlite:///kaham_database.db")
-print(db.dialect)
-print(db.get_usable_table_names())
+# db = SQLDatabase.from_uri("sqlite:///kaham_database.db")
+# print(db.dialect)
+# print(db.get_usable_table_names())
 
 
 # conn = sqlite3.connect('mydatabase.db')
